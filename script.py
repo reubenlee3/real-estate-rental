@@ -9,7 +9,7 @@ district = []
 bedroom = []
 
 #upload data file for list of postal areas
-postal_areas = pd.read_csv("/Users/smu/Desktop/Data Science stuff/rental units project/list-of-postal-districts.csv")
+postal_areas = pd.read_csv("...")
 
 preferred_area = "ang mo kio"
 preferred_area = preferred_area.title()
