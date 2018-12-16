@@ -24,6 +24,7 @@ postal_district = int(district_code['Postal District'])
 if (postal_district == 0):
     print("Your Area is sadly not in our repository")
 
+#web scraper
 from bs4 import BeautifulSoup
 import urllib.request
 import csv
@@ -61,20 +62,49 @@ for j in range(1,5):
         data_price = p.text.strip()
         pp.append(data_price)
     
+    #create sqft list 
+    sqft = soupysoupy.find_all('a',{'class':'attrs-price-per-unit-desktop'})
+    
+    for a in sqft:
+        data_sqft = a.text.strip()
+        squarefeet.append(data_sqft)
+    
     #function to not scrap the website too aggressively
     time.sleep(random.randint(1,10))
 
 address_df = pd.DataFrame(address,columns=['Address'])
 price_df = pd.DataFrame(pp,columns=['Price'])
+sqft_df = pd.DataFrame(squarefeet,columns=['Square Feet'])
 
 #combine both dataframes and clean the data a bit
-full_data = pd.concat([address_df,price_df],axis=1)
+full_data = pd.concat([address_df,price_df,sqft_df],axis=1)
+
 full_data = full_data.replace({'SGD':''},regex=True)
 full_data = full_data.replace({',':''},regex = True)
 full_data = full_data.replace({'Blk':''},regex = True)
-full_data["Address"] = full_data['Address'].str.slice(0,-7,1)
-full_data['Price']=pd.to_numeric(full_data['Price'])
+full_data = full_data.replace({'Built-up : ':''},regex = True)
 
+for k in range(0,len(full_data.index)):
+    if (full_data['Square Feet'][k][-6:] == 'sq. m.'):
+        full_data['Square Feet'][k] = full_data['Square Feet'][k].replace(' sq. m.','')
+        full_data['Square Feet'][k] = int(full_data['Square Feet'][k]) * 10.764
+
+full_data = full_data.replace({' sq. ft.':''},regex = True)
+full_data["Address"] = full_data['Address'].str.slice(0,-7,1)
+full_data['Price'] = pd.to_numeric(full_data['Price'])
+full_data['Square Feet'] = pd.to_numeric(full_data['Square Feet'])
+
+
+#now lets filter out the weird stuff eg rooms that are not accurately labelled
+full_data_clean = full_data[full_data['Square Feet'] > 150 * int(bedroom)]
+full_data_clean
+
+
+#create empty lists to store values later on
+location = []
+lat = []
+long = []
+    
 #create empty lists to store values later on
 location = []
 lat = []
@@ -110,9 +140,9 @@ mid_price_bracket = np.percentile(full_data['Price'],70)
 
 def colourcode(price):
     if (price < lower_price_bracket):
-        return('black')
-    elif (price >= lower_price_bracket and price < mid_price_bracket):
         return('green')
+    elif (price >= lower_price_bracket and price < mid_price_bracket):
+        return('orange')
     else:
         return('red')
 
