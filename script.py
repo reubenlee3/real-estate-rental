@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 %matplotlib inline
 
 #this is for determining the postal district
@@ -122,7 +122,7 @@ lat_df = pd.DataFrame(lat,columns=["Latitude"])
 long_df = pd.DataFrame(long,columns=["Longitude"])
 
 #combine the lat and long df into the main dataset
-full_data = pd.concat([full_data,lat_df,long_df],axis = 1)
+full_data_clean = pd.concat([full_data_clean,lat_df,long_df],axis = 1)
 
 #create a map of singapore
 location = [1.3521,103.8198]
@@ -130,13 +130,13 @@ sgmap = folium.Map(location,zoom_start = 12)
 
 
 #store latitude data and longitude data in dataframes
-latitude = full_data["Latitude"]
-longitude = full_data['Longitude']
-price = full_data['Price']
+latitude = full_data_clean["Latitude"]
+longitude = full_data_clean['Longitude']
+price = full_data_clean['Price']
 
 #create a colour coding function
-lower_price_bracket = np.percentile(full_data['Price'],30)
-mid_price_bracket = np.percentile(full_data['Price'],70)
+lower_price_bracket = np.percentile(full_data_clean['Price'],30)
+mid_price_bracket = np.percentile(full_data_clean['Price'],70)
 
 def colourcode(price):
     if (price < lower_price_bracket):
