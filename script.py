@@ -45,7 +45,8 @@ for j in range(1,5):
     soupysoupy = BeautifulSoup(page.text,'html.parser')
 
     geolocator = Nominatim(user_agent = "Jalaba")
-
+    
+    #create address list
     addr = soupysoupy.find_all("div",{'class':'fsKEtj'})
     
     for a in addr:
@@ -53,13 +54,14 @@ for j in range(1,5):
         address.append(data_addr)
 
 
-    #create price dataframe
+    #create price list
     price = soupysoupy.find_all("div",{'class':'hzTrLN'})
     
     for p in price:
         data_price = p.text.strip()
         pp.append(data_price)
     
+    #function to not scrap the website too aggressively
     time.sleep(random.randint(1,10))
 
 address_df = pd.DataFrame(address,columns=['Address'])
@@ -73,26 +75,29 @@ full_data = full_data.replace({'Blk':''},regex = True)
 full_data["Address"] = full_data['Address'].str.slice(0,-7,1)
 full_data['Price']=pd.to_numeric(full_data['Price'])
 
+#create empty lists to store values later on
 location = []
 lat = []
 long = []
     
+#loop through the addresses collected from the website to generate latitude and longitude values
 for i in range(0,len(full_data.index)):
     locator = geolocator.geocode(str(full_data['Address'][i]))
     location.append(locator)
     lat.append(location[i][1][0])
     long.append(location[i][1][1])
 
+#create the latitude and longitude dataframes
 lat_df = pd.DataFrame(lat,columns=["Latitude"])
 long_df = pd.DataFrame(long,columns=["Longitude"])
 
+#combine the lat and long df into the main dataset
 full_data = pd.concat([full_data,lat_df,long_df],axis = 1)
 
-location = [1.3700,103.8496]
-sgmap = folium.Map(location,zoom_start = 15)
+#create a map of singapore
+location = [1.3521,103.8198]
+sgmap = folium.Map(location,zoom_start = 12)
 
-#plot the marker for the area in question
-folium.Marker(location = [1.3700,103.8496], icon = folium.Icon(color = 'red')).add_to(sgmap)
 
 #store latitude data and longitude data in dataframes
 latitude = full_data["Latitude"]
