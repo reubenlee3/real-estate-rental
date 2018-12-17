@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-%matplotlib inline
 
 #this is for determining the postal district
 #define two search parameters
@@ -15,7 +13,7 @@ preferred_area = "ang mo kio"
 preferred_area = preferred_area.title()
 
 #bedroom number parameter
-bedroom = 3
+bedroom = 2
 
 #for i in range(0,len(postal_areas.index)):
 district_code = postal_areas[postal_areas["General Location"].str.contains(preferred_area)]
@@ -30,12 +28,14 @@ import urllib.request
 import csv
 import requests
 import folium
+from folium.plugins import MarkerCluster
 from geopy.geocoders import Nominatim
 import random
 import time
 
 address = []
 pp = []
+squarefeet = []
 
 for j in range(1,5):
     
@@ -47,7 +47,7 @@ for j in range(1,5):
 
     geolocator = Nominatim(user_agent = "Jalaba")
     
-    #create address list
+    #create temporary address list
     addr = soupysoupy.find_all("div",{'class':'fsKEtj'})
     
     for a in addr:
@@ -69,7 +69,6 @@ for j in range(1,5):
         data_sqft = a.text.strip()
         squarefeet.append(data_sqft)
     
-    #function to not scrap the website too aggressively
     time.sleep(random.randint(1,10))
 
 address_df = pd.DataFrame(address,columns=['Address'])
@@ -93,26 +92,23 @@ full_data = full_data.replace({' sq. ft.':''},regex = True)
 full_data["Address"] = full_data['Address'].str.slice(0,-7,1)
 full_data['Price'] = pd.to_numeric(full_data['Price'])
 full_data['Square Feet'] = pd.to_numeric(full_data['Square Feet'])
+full_data = full_data.dropna()
 
 
 #now lets filter out the weird stuff eg rooms that are not accurately labelled
-full_data_clean = full_data[full_data['Square Feet'] > 150 * int(bedroom)]
-full_data_clean
+full_data_clean = full_data[(full_data['Square Feet'] > 150 * int(bedroom)) & (full_data['Price'] > 500 * int(bedroom))]
+full_data_clean = full_data_clean.reset_index(drop=True)
 
 
 #create empty lists to store values later on
 location = []
 lat = []
 long = []
-    
-#create empty lists to store values later on
-location = []
-lat = []
-long = []
-    
+
+geolocator = Nominatim(user_agent="user name here")
 #loop through the addresses collected from the website to generate latitude and longitude values
-for i in range(0,len(full_data.index)):
-    locator = geolocator.geocode(str(full_data['Address'][i]))
+for i in range(0,len(full_data_clean.index)):
+    locator = geolocator.geocode(str(full_data_clean['Address'][i]))
     location.append(locator)
     lat.append(location[i][1][0])
     long.append(location[i][1][1])
@@ -128,26 +124,48 @@ full_data_clean = pd.concat([full_data_clean,lat_df,long_df],axis = 1)
 location = [1.3521,103.8198]
 sgmap = folium.Map(location,zoom_start = 12)
 
-
-#store latitude data and longitude data in dataframes
-latitude = full_data_clean["Latitude"]
-longitude = full_data_clean['Longitude']
-price = full_data_clean['Price']
-
 #create a colour coding function
 lower_price_bracket = np.percentile(full_data_clean['Price'],30)
 mid_price_bracket = np.percentile(full_data_clean['Price'],70)
 
-def colourcode(price):
-    if (price < lower_price_bracket):
+def colourcode(rent_price):
+    if (rent_price < lower_price_bracket):
         return('green')
-    elif (price >= lower_price_bracket and price < mid_price_bracket):
+    elif (rent_price >= lower_price_bracket and rent_price < mid_price_bracket):
         return('orange')
     else:
         return('red')
 
-#loop to find the houses on the map using coordinates
-for latitude,longitude,price in zip(latitude,longitude,price):
-    folium.Marker(location = [latitude,longitude], icon = folium.Icon(color = colourcode(price))).add_to(sgmap)
+#store latitude data and longitude data in dataframes
+latitude = full_data_clean['Latitude']
+longitude = full_data_clean['Longitude']
+price = full_data_clean['Price']
+address = full_data_clean['Address']
 
-sgmap
+#loop to find the houses on the map using coordinates
+for latitude, longitude, address, price in zip(latitude,longitude,address,price):
+    folium.Marker(location = [latitude,longitude],popup=str(address) + ' $' + str(price), icon = folium.Icon(color = colourcode(price))).add_to(sgmap)
+
+#plot some graphs
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+%matplotlib inline
+
+#box plot of price ranges
+plt.rcParams['figure.figsize'] = (10, 10)
+plt.rcParams['font.size'] = '15'
+plt.title('Rental Price of Apartments in ' + str(preferred_area))
+plt.xlabel('')
+plt.ylabel('Price per month')
+
+#histogram of price ranges
+plt.boxplot(full_data_clean['Price'])
+
+plt.rcParams['figure.figsize'] = (10, 10)
+plt.rcParams['font.size'] = '15'
+plt.title('Rental Price of Apartments in ' + str(preferred_area))
+plt.xlabel('Price per Month')
+plt.ylabel('Number of Units')
+
+plt.hist(full_data_clean['Price'])
+
