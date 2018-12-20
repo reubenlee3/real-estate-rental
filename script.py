@@ -83,7 +83,7 @@ full_data = full_data.replace({',':''},regex = True)
 full_data = full_data.replace({'Blk':''},regex = True)
 full_data = full_data.replace({'Built-up : ':''},regex = True)
 
-for k in range(0,len(full_data.index)):
+for k in range(0,len(full_data.index-1)):
     if (full_data['Square Feet'][k][-6:] == 'sq. m.'):
         full_data['Square Feet'][k] = full_data['Square Feet'][k].replace(' sq. m.','')
         full_data['Square Feet'][k] = int(full_data['Square Feet'][k]) * 10.764
