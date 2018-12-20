@@ -42,7 +42,7 @@ for j in range(1,5):
     #extract webpage html, including multiple pages of the webpage
     url1 = 'https://www.iproperty.com.sg/rent/district-' + str(postal_district)+ '/hdb/?bedroom=' + str(bedroom) + '&page=' + str(j)
     headers = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-    page = requests.get(url1,headers= headers)#urllib.request.urlopen(url1)
+    page = requests.get(url1,headers= headers)
     soupysoupy = BeautifulSoup(page.text,'html.parser')
 
     geolocator = Nominatim(user_agent = "Jalaba")
