@@ -107,7 +107,7 @@ long = []
 
 geolocator = Nominatim(user_agent="user name here")
 #loop through the addresses collected from the website to generate latitude and longitude values
-for i in range(0,len(full_data_clean.index)):
+for i in range(0,len(full_data_clean.index)-1):
     locator = geolocator.geocode(str(full_data_clean['Address'][i]))
     location.append(locator)
     lat.append(location[i][1][0])
